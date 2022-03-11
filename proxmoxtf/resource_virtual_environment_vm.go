@@ -2360,7 +2360,7 @@ func resourceVirtualEnvironmentVMGetVGADeviceObject(d *schema.ResourceData, m in
 		return nil, err
 	}
 
-	vgaEnabled := proxmox.CustomBool(vgaBlock[mkResourceVirtualEnvironmentVMAgentEnabled].(bool))
+	vgaEnabled := proxmox.CustomBool(vgaBlock[mkResourceVirtualEnvironmentVMVGAEnabled].(bool))
 	vgaMemory := vgaBlock[mkResourceVirtualEnvironmentVMVGAMemory].(int)
 	vgaType := vgaBlock[mkResourceVirtualEnvironmentVMVGAType].(string)
 
