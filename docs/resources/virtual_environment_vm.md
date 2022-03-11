@@ -270,6 +270,10 @@ output "ubuntu_vm_public_key" {
         * `/dev/*` - A host serial device.
         * `socket` - A unix socket.
 * `started` - (Optional) Whether to start the virtual machine (defaults to `true`).
+* `startup` - (Optional) Configure the start on boot sequence.
+    * `down` - (Optional) Number of seconds to wait after issuing th shutdown of this virtual machine.
+    * `order` - (Optional) The order in which to start the virtual machine.
+    * `up` - (Optional) The number of seconds to wait after starting this virtual machine.
 * `tablet_device` - (Optional) Whether to enable the USB tablet device (defaults to `true`).
 * `template` - (Optional) Whether to create a template (defaults to `false`).
 * `timeout_clone` - (Optional) Timeout for cloning a VM in seconds (defaults to 1800).

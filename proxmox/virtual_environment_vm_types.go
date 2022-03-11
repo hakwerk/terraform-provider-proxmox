@@ -986,16 +986,16 @@ func (r CustomSpiceEnhancements) EncodeValues(key string, v *url.Values) error {
 func (r CustomStartupOrder) EncodeValues(key string, v *url.Values) error {
 	values := []string{}
 
+	if r.Down != nil && *r.Down > 0 {
+		values = append(values, fmt.Sprintf("down=%d", *r.Down))
+	}
+
 	if r.Order != nil {
 		values = append(values, fmt.Sprintf("order=%d", *r.Order))
 	}
 
-	if r.Up != nil {
+	if r.Up != nil && *r.Up > 0 {
 		values = append(values, fmt.Sprintf("up=%d", *r.Up))
-	}
-
-	if r.Down != nil {
-		values = append(values, fmt.Sprintf("down=%d", *r.Down))
 	}
 
 	if len(values) > 0 {
@@ -1496,6 +1496,62 @@ func (r *CustomSMBIOS) UnmarshalJSON(b []byte) error {
 				r.UUID = &v[1]
 			case "version":
 				r.Version = &v[1]
+			}
+		}
+	}
+
+	return nil
+}
+
+// UnmarshalJSON converts a CustomStartupOrder string to an object.
+func (r *CustomStartupOrder) UnmarshalJSON(b []byte) error {
+	var s string
+
+	err := json.Unmarshal(b, &s)
+
+	if err != nil {
+		return err
+	}
+
+	pairs := strings.Split(s, ",")
+
+	for _, p := range pairs {
+		v := strings.Split(strings.TrimSpace(p), "=")
+
+		if len(v) == 1 {
+			iv, err := strconv.Atoi(v[0])
+
+			if err != nil {
+				return err
+			}
+
+			r.Order = &iv
+		} else if len(v) == 2 {
+			switch v[0] {
+			case "down":
+				iv, err := strconv.Atoi(v[1])
+
+				if err != nil {
+					return err
+				}
+
+				r.Down = &iv
+			case "order":
+				iv, err := strconv.Atoi(v[1])
+
+				if err != nil {
+					return err
+				}
+
+				r.Order = &iv
+			case "up":
+				iv, err := strconv.Atoi(v[1])
+
+				if err != nil {
+					return err
+				}
+
+				r.Up = &iv
 			}
 		}
 	}

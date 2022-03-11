@@ -19,7 +19,10 @@ import (
 
 const (
 	dvResourceVirtualEnvironmentVMRebootAfterCreation               = false
-	dvResourceVirtualEnvironmentVMOnBoot                            = false
+	dvResourceVirtualEnvironmentVMStartOnBoot                       = false
+	dvResourceVirtualEnvironmentVMStartupDown                       = 0
+	dvResourceVirtualEnvironmentVMStartupOrder                      = 9999
+	dvResourceVirtualEnvironmentVMStartupUp                         = 0
 	dvResourceVirtualEnvironmentVMACPI                              = true
 	dvResourceVirtualEnvironmentVMAgentEnabled                      = false
 	dvResourceVirtualEnvironmentVMAgentTimeout                      = "15m"
@@ -94,7 +97,11 @@ const (
 	maxResourceVirtualEnvironmentVMSerialDevices  = 4
 
 	mkResourceVirtualEnvironmentVMRebootAfterCreation               = "reboot"
-	mkResourceVirtualEnvironmentVMOnBoot                            = "on_boot"
+	mkResourceVirtualEnvironmentVMStartOnBoot                       = "on_boot"
+	mkResourceVirtualEnvironmentVMStartup                           = "startup"
+	mkResourceVirtualEnvironmentVMStartupDown                       = "down"
+	mkResourceVirtualEnvironmentVMStartupOrder                      = "order"
+	mkResourceVirtualEnvironmentVMStartupUp                         = "up"
 	mkResourceVirtualEnvironmentVMACPI                              = "acpi"
 	mkResourceVirtualEnvironmentVMAgent                             = "agent"
 	mkResourceVirtualEnvironmentVMAgentEnabled                      = "enabled"
@@ -201,11 +208,52 @@ func resourceVirtualEnvironmentVM() *schema.Resource {
 				Optional:    true,
 				Default:     dvResourceVirtualEnvironmentVMRebootAfterCreation,
 			},
-			mkResourceVirtualEnvironmentVMOnBoot: {
+			mkResourceVirtualEnvironmentVMStartOnBoot: {
 				Type:        schema.TypeBool,
 				Description: "Start VM on Node boot",
 				Optional:    true,
-				Default:     dvResourceVirtualEnvironmentVMOnBoot,
+				Default:     dvResourceVirtualEnvironmentVMStartOnBoot,
+			},
+			mkResourceVirtualEnvironmentVMStartup: {
+				Type:        schema.TypeList,
+				Description: "The QEMU start at boot configuration",
+				Optional:    true,
+				DefaultFunc: func() (interface{}, error) {
+					return []interface{}{
+						map[string]interface{}{
+							mkResourceVirtualEnvironmentVMStartupDown:  dvResourceVirtualEnvironmentVMStartupDown,
+							mkResourceVirtualEnvironmentVMStartupOrder: dvResourceVirtualEnvironmentVMStartupOrder,
+							mkResourceVirtualEnvironmentVMStartupUp:    dvResourceVirtualEnvironmentVMStartupUp,
+						},
+					}, nil
+				},
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						mkResourceVirtualEnvironmentVMStartupDown: {
+							Type:         schema.TypeInt,
+							Description:  "Time (in seconds) to wait after initiating shutdown of this VM",
+							Optional:     true,
+							Default:      dvResourceVirtualEnvironmentVMStartupDown,
+							ValidateFunc: validation.IntBetween(0, 900),
+						},
+						mkResourceVirtualEnvironmentVMStartupOrder: {
+							Type:         schema.TypeInt,
+							Description:  "The order in which to start this VM",
+							Optional:     true,
+							Default:      dvResourceVirtualEnvironmentVMStartupOrder,
+							ValidateFunc: validation.IntBetween(1, 9999),
+						},
+						mkResourceVirtualEnvironmentVMStartupUp: {
+							Type:         schema.TypeInt,
+							Description:  "Time (in seconds) to wait after starting this VM before the next",
+							Optional:     true,
+							Default:      dvResourceVirtualEnvironmentVMStartupUp,
+							ValidateFunc: validation.IntBetween(0, 900),
+						},
+					},
+				},
+				MaxItems: 1,
+				MinItems: 0,
 			},
 			mkResourceVirtualEnvironmentVMACPI: {
 				Type:        schema.TypeBool,
@@ -1155,7 +1203,8 @@ func resourceVirtualEnvironmentVMCreateClone(d *schema.ResourceData, m interface
 	networkDevice := d.Get(mkResourceVirtualEnvironmentVMNetworkDevice).([]interface{})
 	operatingSystem := d.Get(mkResourceVirtualEnvironmentVMOperatingSystem).([]interface{})
 	serialDevice := d.Get(mkResourceVirtualEnvironmentVMSerialDevice).([]interface{})
-	onBoot := proxmox.CustomBool(d.Get(mkResourceVirtualEnvironmentVMOnBoot).(bool))
+	onBoot := proxmox.CustomBool(d.Get(mkResourceVirtualEnvironmentVMStartOnBoot).(bool))
+	startup := d.Get(mkResourceVirtualEnvironmentVMStartup).([]interface{})
 	tabletDevice := proxmox.CustomBool(d.Get(mkResourceVirtualEnvironmentVMTabletDevice).(bool))
 	template := proxmox.CustomBool(d.Get(mkResourceVirtualEnvironmentVMTemplate).(bool))
 	vga := d.Get(mkResourceVirtualEnvironmentVMVGA).([]interface{})
@@ -1354,6 +1403,20 @@ func resourceVirtualEnvironmentVMCreateClone(d *schema.ResourceData, m interface
 	}
 
 	updateBody.StartOnBoot = &onBoot
+
+	if len(startup) > 0 {
+		startupBlock := startup[0].(map[string]interface{})
+
+		startupDown  := startupBlock[mkResourceVirtualEnvironmentVMStartupDown].(int)
+		startupOrder := startupBlock[mkResourceVirtualEnvironmentVMStartupOrder].(int)
+		startupUp    := startupBlock[mkResourceVirtualEnvironmentVMStartupUp].(int)
+
+		updateBody.StartupOrder = &proxmox.CustomStartupOrder{
+			Down:  &startupDown,
+			Order: &startupOrder,
+			Up:    &startupUp,
+		}
+	}
 
 	if tabletDevice != dvResourceVirtualEnvironmentVMTabletDevice {
 		updateBody.TabletDeviceEnabled = &tabletDevice
@@ -1620,7 +1683,18 @@ func resourceVirtualEnvironmentVMCreateCustom(d *schema.ResourceData, m interfac
 		return err
 	}
 
-	onBoot := proxmox.CustomBool(d.Get(mkResourceVirtualEnvironmentVMOnBoot).(bool))
+	onBoot := proxmox.CustomBool(d.Get(mkResourceVirtualEnvironmentVMStartOnBoot).(bool))
+
+	startupBlock, err := getSchemaBlock(resource, d, m, []string{mkResourceVirtualEnvironmentVMStartup}, 0, true)
+
+	if err != nil {
+		return err
+	}
+
+	startupDown  := startupBlock[mkResourceVirtualEnvironmentVMStartupDown].(int)
+	startupOrder := startupBlock[mkResourceVirtualEnvironmentVMStartupOrder].(int)
+	startupUp    := startupBlock[mkResourceVirtualEnvironmentVMStartupUp].(int)
+
 	tabletDevice := proxmox.CustomBool(d.Get(mkResourceVirtualEnvironmentVMTabletDevice).(bool))
 	template := proxmox.CustomBool(d.Get(mkResourceVirtualEnvironmentVMTemplate).(bool))
 
@@ -1710,6 +1784,11 @@ func resourceVirtualEnvironmentVMCreateCustom(d *schema.ResourceData, m interfac
 		SerialDevices:       serialDevices,
 		SharedMemory:        memorySharedObject,
 		StartOnBoot:         &onBoot,
+		StartupOrder: &proxmox.CustomStartupOrder{
+			Down:  &startupDown,
+			Order: &startupOrder,
+			Up:    &startupUp,
+		},
 		TabletDeviceEnabled: &tabletDevice,
 		Template:            &template,
 		VGADevice:           vgaDevice,
@@ -2983,6 +3062,59 @@ func resourceVirtualEnvironmentVMReadCustom(d *schema.ResourceData, m interface{
 		d.Set(mkResourceVirtualEnvironmentVMSerialDevice, serialDevices[:serialDevicesCount])
 	}
 
+	// Compare the start on boot configuration to the one stored in the state.
+	currentOnBoot := d.Get(mkResourceVirtualEnvironmentVMStartOnBoot).(bool)
+
+	if len(clone) == 0 || currentOnBoot != dvResourceVirtualEnvironmentVMStartOnBoot {
+		if vmConfig.StartOnBoot != nil {
+			d.Set(mkResourceVirtualEnvironmentVMStartOnBoot, *vmConfig.StartOnBoot)
+		}
+	}
+
+	// Compare the startup order configuration to the one stored in the state.
+	currentStartupOrder := d.Get(mkResourceVirtualEnvironmentVMStartup).([]interface{})
+
+	if len(clone) == 0 || len(currentStartupOrder) > 0 {
+		if vmConfig.StartupOrder != nil {
+			startupOrder := map[string]interface{}{}
+
+			if vmConfig.StartupOrder.Down != nil {
+				startupOrder[mkResourceVirtualEnvironmentVMStartupDown] = int(*vmConfig.StartupOrder.Down)
+			} else {
+				startupOrder[mkResourceVirtualEnvironmentVMStartupDown] = dvResourceVirtualEnvironmentVMStartupDown
+			}
+
+			if vmConfig.StartupOrder.Order != nil {
+				startupOrder[mkResourceVirtualEnvironmentVMStartupOrder] = int(*vmConfig.StartupOrder.Order)
+			} else {
+				startupOrder[mkResourceVirtualEnvironmentVMStartupOrder] = dvResourceVirtualEnvironmentVMStartupOrder
+			}
+
+			if vmConfig.StartupOrder.Up != nil {
+				startupOrder[mkResourceVirtualEnvironmentVMStartupUp] = int(*vmConfig.StartupOrder.Up)
+			} else {
+				startupOrder[mkResourceVirtualEnvironmentVMStartupUp] = dvResourceVirtualEnvironmentVMStartupUp
+			}
+
+			if len(clone) > 0 {
+				if len(currentStartupOrder) > 0 {
+					d.Set(mkResourceVirtualEnvironmentVMStartup, []interface{}{startupOrder})
+				}
+			} else if len(currentStartupOrder) > 0 ||
+				startupOrder[mkResourceVirtualEnvironmentVMStartupDown] != dvResourceVirtualEnvironmentVMStartupDown ||
+				startupOrder[mkResourceVirtualEnvironmentVMStartupOrder] != dvResourceVirtualEnvironmentVMStartupOrder ||
+				startupOrder[mkResourceVirtualEnvironmentVMStartupUp] != dvResourceVirtualEnvironmentVMStartupUp {
+				d.Set(mkResourceVirtualEnvironmentVMStartup, []interface{}{startupOrder})
+			}
+		} else if len(clone) > 0 {
+			if len(currentStartupOrder) > 0 {
+				d.Set(mkResourceVirtualEnvironmentVMStartup, []interface{}{})
+			}
+		} else {
+			d.Set(mkResourceVirtualEnvironmentVMStartup, []interface{}{})
+		}
+	}
+
 	// Compare the VGA configuration to the one stored in the state.
 	vga := map[string]interface{}{}
 
@@ -3264,6 +3396,11 @@ func resourceVirtualEnvironmentVMUpdate(d *schema.ResourceData, m interface{}) e
 		delete = append(delete, "name")
 	} else {
 		updateBody.Name = &name
+	}
+
+	if d.HasChange(mkResourceVirtualEnvironmentVMStartOnBoot) {
+		onBoot := proxmox.CustomBool(d.Get(mkResourceVirtualEnvironmentVMStartOnBoot).(bool))
+		updateBody.StartOnBoot = &onBoot
 	}
 
 	if d.HasChange(mkResourceVirtualEnvironmentVMTabletDevice) {
@@ -3569,6 +3706,25 @@ func resourceVirtualEnvironmentVMUpdate(d *schema.ResourceData, m interface{}) e
 		}
 
 		rebootRequired = true
+	}
+
+	// Prepare the new startup configuration.
+	if d.HasChange(mkResourceVirtualEnvironmentVMStartup) {
+		startupBlock, err := getSchemaBlock(resource, d, m, []string{mkResourceVirtualEnvironmentVMStartup}, 0, true)
+
+		if err != nil {
+			return err
+		}
+
+		startupDown  := startupBlock[mkResourceVirtualEnvironmentVMStartupDown].(int)
+		startupOrder := startupBlock[mkResourceVirtualEnvironmentVMStartupOrder].(int)
+		startupUp    := startupBlock[mkResourceVirtualEnvironmentVMStartupUp].(int)
+
+		updateBody.StartupOrder = &proxmox.CustomStartupOrder{
+			Down:  &startupDown,
+			Order: &startupOrder,
+			Up:    &startupUp,
+		}
 	}
 
 	// Prepare the new VGA configuration.
