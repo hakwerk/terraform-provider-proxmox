@@ -167,7 +167,7 @@ func (c *VirtualEnvironmentClient) UploadFileToDatastore(d *VirtualEnvironmentDa
 		}
 
 		buf, err := sshSession.CombinedOutput(
-			fmt.Sprintf(`grep -Pzo ': %s\s+path\s+[^\s]+' /etc/pve/storage.cfg | grep -Pzo '/[^\s]*' | tr -d '\000'`, d.DatastoreID),
+			fmt.Sprintf(`sudo grep -Pzo ': %s\s+path\s+[^\s]+' /etc/pve/storage.cfg | grep -Pzo '/[^\s]*' | tr -d '\000'`, d.DatastoreID),
 		)
 
 		if err != nil {
