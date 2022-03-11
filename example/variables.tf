@@ -12,3 +12,15 @@ variable "virtual_environment_username" {
   type        = string
   description = "The username and realm for the Proxmox Virtual Environment API (example: root@pam)"
 }
+
+variable "virtual_environment_tokenname" {
+  type        = string
+  description = "The optional name of the API token for the Proxmox Virtual Environment API (example: provisioning)"
+  default     = ""
+}
+
+variable "virtual_environment_tokenvalue" {
+  type        = string
+  description = "The optional value of the API token for the Proxmox Virtual Environment API (example: 12345678-1234-1234-1234-1234567890ab)"
+  default     = ""
+}

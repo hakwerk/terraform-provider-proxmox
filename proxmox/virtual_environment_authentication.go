@@ -24,6 +24,14 @@ func (c *VirtualEnvironmentClient) Authenticate(reset bool) error {
 		return nil
 	}
 
+	// Store authentication header value when using API token
+	if c.Tokenname != "" {
+		c.authenticationData = &VirtualEnvironmentAuthenticationResponseData{
+			AuthHeader: "PVEAPIToken="+c.Username+"!"+c.Tokenname+"="+c.Tokenvalue,
+		}
+		return nil
+	}
+
 	var reqBody *bytes.Buffer
 
 	if c.OTP != nil {
@@ -95,6 +103,11 @@ func (c *VirtualEnvironmentClient) AuthenticateRequest(req *http.Request) error 
 
 	if err != nil {
 		return err
+	}
+
+	if c.authenticationData.AuthHeader != "" {
+		req.Header.Set("Authorization", c.authenticationData.AuthHeader)
+		return nil
 	}
 
 	req.AddCookie(&http.Cookie{

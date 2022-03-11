@@ -25,4 +25,5 @@ type VirtualEnvironmentAuthenticationResponseData struct {
 	Capabilities        *VirtualEnvironmentAuthenticationResponseCapabilities `json:"cap,omitempty"`
 	Ticket              *string                                               `json:"ticket,omitempty"`
 	Username            string                                                `json:"username"`
+	AuthHeader 			string 												  `json:"authheader,omitempty"`
 }

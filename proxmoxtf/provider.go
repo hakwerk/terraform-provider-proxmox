@@ -14,17 +14,21 @@ import (
 )
 
 const (
-	dvProviderVirtualEnvironmentEndpoint = ""
-	dvProviderVirtualEnvironmentOTP      = ""
-	dvProviderVirtualEnvironmentPassword = ""
-	dvProviderVirtualEnvironmentUsername = ""
+	dvProviderVirtualEnvironmentEndpoint   = ""
+	dvProviderVirtualEnvironmentOTP        = ""
+	dvProviderVirtualEnvironmentPassword   = ""
+	dvProviderVirtualEnvironmentUsername   = ""
+	dvProviderVirtualEnvironmentTokenname  = ""
+	dvProviderVirtualEnvironmentTokenvalue = ""
 
-	mkProviderVirtualEnvironment         = "virtual_environment"
-	mkProviderVirtualEnvironmentEndpoint = "endpoint"
-	mkProviderVirtualEnvironmentInsecure = "insecure"
-	mkProviderVirtualEnvironmentOTP      = "otp"
-	mkProviderVirtualEnvironmentPassword = "password"
-	mkProviderVirtualEnvironmentUsername = "username"
+	mkProviderVirtualEnvironment           = "virtual_environment"
+	mkProviderVirtualEnvironmentEndpoint   = "endpoint"
+	mkProviderVirtualEnvironmentInsecure   = "insecure"
+	mkProviderVirtualEnvironmentOTP        = "otp"
+	mkProviderVirtualEnvironmentPassword   = "password"
+	mkProviderVirtualEnvironmentUsername   = "username"
+	mkProviderVirtualEnvironmentTokenname  = "tokenname"
+	mkProviderVirtualEnvironmentTokenvalue = "tokenvalue"
 )
 
 type providerConfiguration struct {
@@ -167,6 +171,24 @@ func Provider() *schema.Provider {
 								return []string{}, []error{}
 							},
 						},
+						mkProviderVirtualEnvironmentTokenname: {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The API token name for the Proxmox Virtual Environment API",
+							DefaultFunc: schema.MultiEnvDefaultFunc(
+								[]string{"PROXMOX_VE_TOKENNAME", "PM_VE_TOKENNAME"},
+								dvProviderVirtualEnvironmentTokenname,
+							),
+						},
+						mkProviderVirtualEnvironmentTokenvalue: {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The API token value for the Proxmox Virtual Environment API",
+							DefaultFunc: schema.MultiEnvDefaultFunc(
+								[]string{"PROXMOX_VE_TOKENVALUE", "PM_VE_TOKENVALUE"},
+								dvProviderVirtualEnvironmentTokenvalue,
+							),
+						},
 					},
 				},
 				MaxItems: 1,
@@ -189,6 +211,8 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 			veConfig[mkProviderVirtualEnvironmentEndpoint].(string),
 			veConfig[mkProviderVirtualEnvironmentUsername].(string),
 			veConfig[mkProviderVirtualEnvironmentPassword].(string),
+			veConfig[mkProviderVirtualEnvironmentTokenname].(string),
+			veConfig[mkProviderVirtualEnvironmentTokenvalue].(string),
 			veConfig[mkProviderVirtualEnvironmentOTP].(string),
 			veConfig[mkProviderVirtualEnvironmentInsecure].(bool),
 		)

@@ -23,6 +23,19 @@ provider "proxmox" {
 }
 ```
 
+Due to limitations in the Proxmox VE API, certain actions need to be performed using SSH. So even when using an API token, the password of the PAM user account (standard Linux account) is still required.
+```
+provider "proxmox" {
+  virtual_environment {
+    endpoint = "https://10.0.0.2"
+    username = "myuser@pam"
+    password = "the-password-of-the-myuser-account"
+    tokenname = "provisioning"
+    tokenvalue = "12345678-1234-1234-1234-1234567890ab"
+    insecure = true
+}
+```
+
 ## Authentication
 
 The Proxmox provider offers a flexible means of providing credentials for authentication. The following methods are supported, in this order, and explained below:
@@ -73,3 +86,5 @@ In addition to [generic provider arguments](https://www.terraform.io/docs/config
     * `otp` - (Optional) The one-time password for the Proxmox Virtual Environment API (can also be sourced from `PROXMOX_VE_OTP`).
     * `password` - (Required) The password for the Proxmox Virtual Environment API (can also be sourced from `PROXMOX_VE_PASSWORD`).
     * `username` - (Required) The username and realm for the Proxmox Virtual Environment API (can also be sourced from `PROXMOX_VE_USERNAME`).
+    * `tokenname` - (Optional) The name of the API token for the Proxmox Virtual Environment API (can also be sourced from `PROXMOX_VE_TOKENNAME`).
+    * `tokenvalue` - (Optional) The value of the API token for the Proxmox Virtual Environment API (can also be sourced from `PROXMOX_VE_TOKENVALUE`).

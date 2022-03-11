@@ -21,7 +21,7 @@ import (
 )
 
 // NewVirtualEnvironmentClient creates and initializes a VirtualEnvironmentClient instance.
-func NewVirtualEnvironmentClient(endpoint, username, password, otp string, insecure bool) (*VirtualEnvironmentClient, error) {
+func NewVirtualEnvironmentClient(endpoint, username, password, tokenname, tokenvalue, otp string, insecure bool) (*VirtualEnvironmentClient, error) {
 	url, err := url.ParseRequestURI(endpoint)
 
 	if err != nil {
@@ -40,6 +40,10 @@ func NewVirtualEnvironmentClient(endpoint, username, password, otp string, insec
 		return nil, errors.New("You must specify a username for the Proxmox Virtual Environment API")
 	}
 
+	if ((tokenname != "" && tokenvalue == "") || (tokenname == "" && tokenvalue != "")) {
+		return nil, errors.New("You must specify both the token name and its value for the Proxmox Virtual Environment API")
+	}
+
 	var pOTP *string
 
 	if otp != "" {
@@ -55,12 +59,14 @@ func NewVirtualEnvironmentClient(endpoint, username, password, otp string, insec
 	}
 
 	return &VirtualEnvironmentClient{
-		Endpoint:   strings.TrimRight(url.String(), "/"),
-		Insecure:   insecure,
-		OTP:        pOTP,
-		Password:   password,
-		Username:   username,
-		httpClient: httpClient,
+		Endpoint:     strings.TrimRight(url.String(), "/"),
+		Insecure:     insecure,
+		OTP:          pOTP,
+		Password:     password,
+		Username:     username,
+		Tokenname:    tokenname,
+		Tokenvalue:   tokenvalue,
+		httpClient:   httpClient,
 	}, nil
 }
 
