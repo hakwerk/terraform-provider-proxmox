@@ -79,8 +79,6 @@ const (
 	mkResourceVirtualEnvironmentContainerInitializationUserAccountKeys       = "keys"
 	mkResourceVirtualEnvironmentContainerInitializationUserAccountPassword   = "password"
 	mkResourceVirtualEnvironmentContainerInitializationUserAccountUsername   = "username"
-	mkResourceVirtualEnvironmentContainerInitializationUserAccountTokenname  = "tokenname"
-	mkResourceVirtualEnvironmentContainerInitializationUserAccountTokenvalue = "tokenvalue"
 	mkResourceVirtualEnvironmentContainerMemory                              = "memory"
 	mkResourceVirtualEnvironmentContainerMemoryDedicated                     = "dedicated"
 	mkResourceVirtualEnvironmentContainerMemorySwap                          = "swap"
