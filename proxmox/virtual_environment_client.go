@@ -21,7 +21,7 @@ import (
 )
 
 // NewVirtualEnvironmentClient creates and initializes a VirtualEnvironmentClient instance.
-func NewVirtualEnvironmentClient(endpoint, username, password, tokenname, tokenvalue, otp string, insecure bool) (*VirtualEnvironmentClient, error) {
+func NewVirtualEnvironmentClient(endpoint, username, password, sshkey, tokenname, tokenvalue, otp string, insecure bool) (*VirtualEnvironmentClient, error) {
 	url, err := url.ParseRequestURI(endpoint)
 
 	if err != nil {
@@ -32,16 +32,20 @@ func NewVirtualEnvironmentClient(endpoint, username, password, tokenname, tokenv
 		return nil, errors.New("You must specify a secure endpoint for the Proxmox Virtual Environment API (valid: https://host:port/)")
 	}
 
-	if password == "" {
-		return nil, errors.New("You must specify a password for the Proxmox Virtual Environment API")
-	}
-
 	if username == "" {
 		return nil, errors.New("You must specify a username for the Proxmox Virtual Environment API")
 	}
 
 	if ((tokenname != "" && tokenvalue == "") || (tokenname == "" && tokenvalue != "")) {
 		return nil, errors.New("You must specify both the token name and its value for the Proxmox Virtual Environment API")
+	}
+
+	if password == "" && tokenvalue == "" {
+		return nil, errors.New("You must specify a password for the Proxmox Virtual Environment API")
+	}
+
+	if password == "" && tokenvalue != "" && sshkey == "" {
+		return nil, errors.New("You must either specify a password or an SSH key for the Proxmox Virtual Environment API")
 	}
 
 	var pOTP *string
@@ -64,6 +68,7 @@ func NewVirtualEnvironmentClient(endpoint, username, password, tokenname, tokenv
 		OTP:          pOTP,
 		Password:     password,
 		Username:     username,
+		Sshkey:       sshkey,
 		Tokenname:    tokenname,
 		Tokenvalue:   tokenvalue,
 		httpClient:   httpClient,

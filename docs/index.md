@@ -23,13 +23,13 @@ provider "proxmox" {
 }
 ```
 
-Due to limitations in the Proxmox VE API, certain actions need to be performed using SSH. So even when using an API token, the password of the PAM user account (standard Linux account) is still required.
+Due to limitations in the Proxmox VE API, certain actions need to be performed using SSH. So even when using an API token, the password of the PAM user account (standard Linux account) is still required UNLESS a local private SSH key is provided.
 ```
 provider "proxmox" {
   virtual_environment {
     endpoint = "https://10.0.0.2"
     username = "myuser@pam"
-    password = "the-password-of-the-myuser-account"
+    sshkey = "/home/localuser/.ssh/id_rsa"
     tokenname = "provisioning"
     tokenvalue = "12345678-1234-1234-1234-1234567890ab"
     insecure = true
@@ -84,7 +84,8 @@ In addition to [generic provider arguments](https://www.terraform.io/docs/config
     * `endpoint` - (Required) The endpoint for the Proxmox Virtual Environment API (can also be sourced from `PROXMOX_VE_ENDPOINT`).
     * `insecure` - (Optional) Whether to skip the TLS verification step (can also be sourced from `PROXMOX_VE_INSECURE`). If omitted, defaults to `false`.
     * `otp` - (Optional) The one-time password for the Proxmox Virtual Environment API (can also be sourced from `PROXMOX_VE_OTP`).
-    * `password` - (Required) The password for the Proxmox Virtual Environment API (can also be sourced from `PROXMOX_VE_PASSWORD`).
+    * `password` - (Required, unless both sshkey and tokenvalue are set) The password for the Proxmox Virtual Environment API (can also be sourced from `PROXMOX_VE_PASSWORD`).
     * `username` - (Required) The username and realm for the Proxmox Virtual Environment API (can also be sourced from `PROXMOX_VE_USERNAME`).
+    * `sshkey` - (Optional) The filename of a local private SSH key that is authorized for the username on Proxmox (can also be sourced from `PROXMOX_VE_SSHKEY`).
     * `tokenname` - (Optional) The name of the API token for the Proxmox Virtual Environment API (can also be sourced from `PROXMOX_VE_TOKENNAME`).
     * `tokenvalue` - (Optional) The value of the API token for the Proxmox Virtual Environment API (can also be sourced from `PROXMOX_VE_TOKENVALUE`).

@@ -13,6 +13,11 @@ variable "virtual_environment_username" {
   description = "The username and realm for the Proxmox Virtual Environment API (example: root@pam)"
 }
 
+variable "virtual_environment_sshkey" {
+  type        = string
+  description = "The filename of the SSH key to authorize the connection to Proxmox via SSH (example: /home/me/.ssh/id_rsa)"
+}
+
 variable "virtual_environment_tokenname" {
   type        = string
   description = "The optional name of the API token for the Proxmox Virtual Environment API (example: provisioning)"

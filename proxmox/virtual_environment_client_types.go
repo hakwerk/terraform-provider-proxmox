@@ -25,6 +25,7 @@ type VirtualEnvironmentClient struct {
 	OTP        *string
 	Password   string
 	Username   string
+	Sshkey     string
 	Tokenname  string
 	Tokenvalue string
 

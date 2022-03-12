@@ -7,6 +7,7 @@ package proxmox
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"sort"
 	"strings"
@@ -155,9 +156,27 @@ func (c *VirtualEnvironmentClient) OpenNodeShell(nodeName string) (*ssh.Client, 
 
 	ur := strings.Split(c.Username, "@")
 
+	auth := []ssh.AuthMethod{}
+
+	if c.Sshkey != "" {
+		key, err := ioutil.ReadFile(c.Sshkey)
+		if err != nil {
+			return nil, err
+		}
+		signer, err := ssh.ParsePrivateKey(key)
+		if err != nil {
+			return nil, err
+		}
+		auth = append(auth, ssh.PublicKeys(signer))
+	}
+
+	if c.Password != "" {
+		auth = append(auth, ssh.Password(c.Password))
+	}
+
 	sshConfig := &ssh.ClientConfig{
 		User:            ur[0],
-		Auth:            []ssh.AuthMethod{ssh.Password(c.Password)},
+		Auth:            auth,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 

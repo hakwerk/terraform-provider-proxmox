@@ -18,6 +18,7 @@ const (
 	dvProviderVirtualEnvironmentOTP        = ""
 	dvProviderVirtualEnvironmentPassword   = ""
 	dvProviderVirtualEnvironmentUsername   = ""
+	dvProviderVirtualEnvironmentSshkey     = ""
 	dvProviderVirtualEnvironmentTokenname  = ""
 	dvProviderVirtualEnvironmentTokenvalue = ""
 
@@ -27,6 +28,7 @@ const (
 	mkProviderVirtualEnvironmentOTP        = "otp"
 	mkProviderVirtualEnvironmentPassword   = "password"
 	mkProviderVirtualEnvironmentUsername   = "username"
+	mkProviderVirtualEnvironmentSshkey     = "sshkey"
 	mkProviderVirtualEnvironmentTokenname  = "tokenname"
 	mkProviderVirtualEnvironmentTokenvalue = "tokenvalue"
 )
@@ -140,17 +142,6 @@ func Provider() *schema.Provider {
 								[]string{"PROXMOX_VE_PASSWORD", "PM_VE_PASSWORD"},
 								dvProviderVirtualEnvironmentPassword,
 							),
-							ValidateFunc: func(v interface{}, k string) (warns []string, errs []error) {
-								value := v.(string)
-
-								if value == "" {
-									return []string{}, []error{
-										errors.New("You must specify a password for the Proxmox Virtual Environment API"),
-									}
-								}
-
-								return []string{}, []error{}
-							},
 						},
 						mkProviderVirtualEnvironmentUsername: {
 							Type:        schema.TypeString,
@@ -171,6 +162,15 @@ func Provider() *schema.Provider {
 
 								return []string{}, []error{}
 							},
+						},
+						mkProviderVirtualEnvironmentSshkey: {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The private SSH key file for the Proxmox Virtual Environment API",
+							DefaultFunc: schema.MultiEnvDefaultFunc(
+								[]string{"PROXMOX_VE_SSHKEY", "PM_VE_SSHKEY"},
+								dvProviderVirtualEnvironmentSshkey,
+							),
 						},
 						mkProviderVirtualEnvironmentTokenname: {
 							Type:        schema.TypeString,
@@ -212,6 +212,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 			veConfig[mkProviderVirtualEnvironmentEndpoint].(string),
 			veConfig[mkProviderVirtualEnvironmentUsername].(string),
 			veConfig[mkProviderVirtualEnvironmentPassword].(string),
+			veConfig[mkProviderVirtualEnvironmentSshkey].(string),
 			veConfig[mkProviderVirtualEnvironmentTokenname].(string),
 			veConfig[mkProviderVirtualEnvironmentTokenvalue].(string),
 			veConfig[mkProviderVirtualEnvironmentOTP].(string),
